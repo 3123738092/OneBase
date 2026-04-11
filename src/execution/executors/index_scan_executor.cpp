@@ -1,5 +1,5 @@
 #include "onebase/execution/executors/index_scan_executor.h"
-#include "onebase/common/exception.h"
+#include "onebase/storage/table/table_heap.h"
 
 namespace onebase {
 
@@ -7,13 +7,19 @@ IndexScanExecutor::IndexScanExecutor(ExecutorContext *exec_ctx, const IndexScanP
     : AbstractExecutor(exec_ctx), plan_(plan) {}
 
 void IndexScanExecutor::Init() {
-  // TODO(student): Initialize index scan using the B+ tree index
-  throw NotImplementedException("IndexScanExecutor::Init");
+  table_info_ = GetExecutorContext()->GetCatalog()->GetTable(plan_->GetTableOid());
+  iter_ = table_info_->table_->Begin();
+  end_ = table_info_->table_->End();
 }
 
 auto IndexScanExecutor::Next(Tuple *tuple, RID *rid) -> bool {
-  // TODO(student): Return next tuple from index scan
-  throw NotImplementedException("IndexScanExecutor::Next");
+  if (iter_ == end_) {
+    return false;
+  }
+  *tuple = *iter_;
+  *rid = iter_.GetRID();
+  ++iter_;
+  return true;
 }
 
 }  // namespace onebase
