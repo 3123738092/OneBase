@@ -1,5 +1,5 @@
 #include "onebase/execution/executors/seq_scan_executor.h"
-#include "onebase/common/exception.h"
+#include "onebase/type/value.h"
 
 namespace onebase {
 
@@ -25,7 +25,12 @@ auto SeqScanExecutor::Next(Tuple *tuple, RID *rid) -> bool {
       }
     }
 
-    *tuple = cur;
+    std::vector<Value> vals;
+    vals.reserve(table_info_->schema_.GetColumnCount());
+    for (uint32_t i = 0; i < table_info_->schema_.GetColumnCount(); ++i) {
+      vals.push_back(cur.GetValue(&table_info_->schema_, i));
+    }
+    *tuple = Tuple(std::move(vals));
     *rid = cur_rid;
     return true;
   }
