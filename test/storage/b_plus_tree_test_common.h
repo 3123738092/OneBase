@@ -132,6 +132,35 @@ class BPlusTreeLab2Test : public ::testing::Test {
     EXPECT_EQ(tree_->Begin(), tree_->End());
   }
 
+  void VerifyReverseOrderedInsertProducesSortedIteration() {
+    std::vector<int> keys;
+    for (int i = 31; i >= 0; --i) {
+      keys.push_back(i);
+    }
+    InsertKeys(keys);
+    std::vector<int> expected;
+    expected.reserve(32);
+    for (int i = 0; i < 32; ++i) {
+      expected.push_back(i);
+    }
+    EXPECT_EQ(CollectKeysFrom(tree_->Begin()), expected);
+    for (int k = 0; k < 32; ++k) {
+      auto got = Lookup(k);
+      ASSERT_EQ(got.size(), 1u) << "missing key " << k;
+      EXPECT_EQ(got[0], MakeRid(k));
+    }
+  }
+
+  void VerifyRemoveMissingKeyLeavesTreeStable() {
+    InsertKeys({0, 10, 20, 30});
+    tree_->Remove(-1);
+    tree_->Remove(100);
+    EXPECT_EQ(CollectKeysFrom(tree_->Begin()), (std::vector<int>{0, 10, 20, 30}));
+    for (int key : std::vector<int>{0, 10, 20, 30}) {
+      ASSERT_EQ(Lookup(key).size(), 1u) << "key " << key;
+    }
+  }
+
   std::string db_name_;
   std::unique_ptr<DiskManager> disk_manager_;
   std::unique_ptr<BufferPoolManager> bpm_;

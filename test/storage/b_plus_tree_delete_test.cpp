@@ -8,4 +8,6 @@ TEST_F(BPlusTreeTest, DeleteMaintainsCorrectnessAndCanEmptyTree) {
   VerifyDeleteMaintainsCorrectnessAndCanEmptyTree();
 }
 
+TEST_F(BPlusTreeTest, RemoveMissingKeyLeavesTreeStable) { VerifyRemoveMissingKeyLeavesTreeStable(); }
+
 }  // namespace onebase

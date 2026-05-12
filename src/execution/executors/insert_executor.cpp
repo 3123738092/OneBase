@@ -1,8 +1,24 @@
 #include "onebase/execution/executors/insert_executor.h"
+#include "onebase/catalog/catalog.h"
 #include "onebase/type/type_id.h"
 #include "onebase/type/value.h"
 
 namespace onebase {
+
+namespace {
+
+auto InsertIndexEntries(Catalog *catalog, TableInfo *table_info, const Tuple &tuple, const RID &rid) -> void {
+  for (auto *index_info : catalog->GetTableIndexes(table_info->name_)) {
+    if (!index_info->SupportsPointLookup()) {
+      continue;
+    }
+    const auto key =
+        tuple.GetValue(&table_info->schema_, index_info->GetLookupAttr()).GetAsInteger();
+    index_info->InsertEntry(key, rid);
+  }
+}
+
+}  // namespace
 
 InsertExecutor::InsertExecutor(ExecutorContext *exec_ctx, const InsertPlanNode *plan,
                                std::unique_ptr<AbstractExecutor> child_executor)
@@ -28,6 +44,7 @@ auto InsertExecutor::Next(Tuple *tuple, RID *rid) -> bool {
   while (child_executor_->Next(&child_tuple, &child_rid)) {
     auto new_rid = table_info->table_->InsertTuple(child_tuple);
     if (new_rid.has_value()) {
+      InsertIndexEntries(catalog, table_info, child_tuple, *new_rid);
       inserted++;
     }
   }

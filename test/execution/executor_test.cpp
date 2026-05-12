@@ -17,6 +17,16 @@ TEST_F(SqlExecutorLab3Test, AggregationAndGroupingEdgeCases) { VerifyAggregation
 
 TEST_F(SqlExecutorLab3Test, SortLimitAndZeroLimit) { VerifySortLimitAndZeroLimit(); }
 
+TEST_F(SqlExecutorLab3Test, EmptyTableFullScanReturnsZeroRows) {
+  VerifyEmptyTableFullScanReturnsZeroRows();
+}
+
+TEST_F(SqlExecutorLab3Test, CompoundAndOrPredicateMix) { VerifyCompoundAndOrPredicateMix(); }
+
+TEST_F(SqlExecutorLab3Test, OrWithDuplicateContributingBranches) {
+  VerifyOrWithDuplicateContributingBranches();
+}
+
 TEST_F(LargeSqlExecutorLab3Test, LargeDataRobustness) { VerifyLargeDataRobustness(); }
 
 TEST_F(LargeSqlExecutorLab3Test, IndexedLookupsMustNotBeSlow) { VerifyIndexedLookupsMustNotBeSlow(); }

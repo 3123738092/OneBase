@@ -167,6 +167,23 @@ class SqlExecutorLab3Test : public ::testing::Test {
     EXPECT_EQ(no_match.GetRowCount(), 0u);
   }
 
+  void VerifyEmptyTableFullScanReturnsZeroRows() {
+    auto rows = client_->ExecuteQuery("SELECT * FROM empty");
+    ASSERT_EQ(rows.GetColumnCount(), 2u);
+    EXPECT_EQ(rows.GetRowCount(), 0u);
+  }
+
+  void VerifyCompoundAndOrPredicateMix() {
+    auto rows =
+        client_->ExecuteQuery("SELECT id, val FROM base WHERE ((id >= 3 AND id <= 5) OR id = 0)");
+    ExpectRows(rows, {"id", "val"}, {{"0", "0"}, {"3", "-30"}, {"4", "40"}, {"5", "50"}});
+  }
+
+  void VerifyOrWithDuplicateContributingBranches() {
+    auto rows = client_->ExecuteQuery("SELECT id, val FROM base WHERE id = 1 OR id = 2");
+    ExpectRows(rows, {"id", "val"}, {{"1", "10"}, {"1", "11"}, {"2", "20"}});
+  }
+
   std::unique_ptr<SqlTestClient> client_;
 };
 

@@ -14,4 +14,10 @@ TEST_F(LRUKReplacerLab1Test, EvictByKDistance) { VerifyEvictByKDistance(); }
 
 TEST_F(LRUKReplacerLab1Test, SetEvictableAndRemove) { VerifySetEvictableAndRemove(); }
 
+TEST_F(LRUKReplacerLab1Test, EvictFailsWhenNothingEvictable) { VerifyEvictFailsWhenNothingEvictable(); }
+
+TEST_F(LRUKReplacerLab1Test, RemoveUntrackedFrameIsNoOp) { VerifyRemoveUntrackedFrameIsNoOp(); }
+
+TEST_F(LRUKReplacerLab1Test, RemoveWhileNonEvictableThrows) { VerifyRemoveWhileNonEvictableThrows(); }
+
 }  // namespace onebase

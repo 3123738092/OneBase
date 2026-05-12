@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <stdexcept>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -121,6 +122,28 @@ class LRUKReplacerLab1Test : public ::testing::Test {
     replacer.Remove(1);
     EXPECT_EQ(replacer.Size(), 0u);
     EXPECT_FALSE(replacer.Evict(&frame));
+  }
+
+  void VerifyEvictFailsWhenNothingEvictable() {
+    LRUKReplacer replacer(8, 2);
+    replacer.RecordAccess(0);
+    replacer.SetEvictable(0, false);
+    EXPECT_EQ(replacer.Size(), 0u);
+    frame_id_t frame;
+    EXPECT_FALSE(replacer.Evict(&frame));
+  }
+
+  void VerifyRemoveUntrackedFrameIsNoOp() {
+    LRUKReplacer replacer(8, 2);
+    EXPECT_NO_THROW(replacer.Remove(99));
+  }
+
+  void VerifyRemoveWhileNonEvictableThrows() {
+    LRUKReplacer replacer(8, 2);
+    replacer.RecordAccess(3);
+    EXPECT_THROW(replacer.Remove(3), std::runtime_error);
+    replacer.SetEvictable(3, true);
+    EXPECT_NO_THROW(replacer.Remove(3));
   }
 };
 
@@ -272,6 +295,50 @@ class BufferPoolManagerLab1Test : public ::testing::Test {
     char buf[PAGE_SIZE] = {};
     dm.ReadPage(pid, buf);
     EXPECT_STREQ(buf, "flush_data");
+
+    dm.ShutDown();
+    std::remove(db.c_str());
+  }
+
+  void VerifyFetchIncrementsPinForSameLogicalPage() {
+    auto db = MakeDbName("double_fetch");
+    DiskManager dm(db);
+    BufferPoolManager bpm(8, &dm);
+
+    page_id_t pid;
+    Page *owned = bpm.NewPage(&pid);
+    ASSERT_NE(owned, nullptr);
+
+    Page *again = bpm.FetchPage(pid);
+    EXPECT_EQ(owned, again);
+
+    ASSERT_TRUE(bpm.UnpinPage(pid, false));
+    ASSERT_TRUE(bpm.UnpinPage(pid, false));
+
+    dm.ShutDown();
+    std::remove(db.c_str());
+  }
+
+  void VerifyDeleteWhilePinnedFails() {
+    auto db = MakeDbName("pinned_del");
+    DiskManager dm(db);
+    BufferPoolManager bpm(8, &dm);
+
+    page_id_t pid;
+    ASSERT_NE(bpm.NewPage(&pid), nullptr);
+    EXPECT_FALSE(bpm.DeletePage(pid));
+    ASSERT_TRUE(bpm.UnpinPage(pid, false));
+    EXPECT_TRUE(bpm.DeletePage(pid));
+
+    dm.ShutDown();
+    std::remove(db.c_str());
+  }
+
+  void VerifyUnpinUnknownPageReturnsFalse() {
+    auto db = MakeDbName("bad_unpin");
+    DiskManager dm(db);
+    BufferPoolManager bpm(4, &dm);
+    EXPECT_FALSE(bpm.UnpinPage(999, false));
 
     dm.ShutDown();
     std::remove(db.c_str());

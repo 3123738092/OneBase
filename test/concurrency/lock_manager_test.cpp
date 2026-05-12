@@ -20,4 +20,10 @@ TEST_F(LockManagerLab4Test, TwoPLEnforce) { VerifyTwoPLEnforce(); }
 
 TEST_F(LockManagerLab4Test, MultiResource) { VerifyMultiResource(); }
 
+TEST_F(LockManagerLab4Test, LockSharedTwiceIsIdempotent) { VerifyLockSharedTwiceIsIdempotent(); }
+
+TEST_F(LockManagerLab4Test, UpgradeUnblocksAfterOtherSharedReleases) {
+  VerifyUpgradeUnblocksAfterOtherSharedReleases();
+}
+
 }  // namespace onebase

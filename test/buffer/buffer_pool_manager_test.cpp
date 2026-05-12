@@ -16,4 +16,12 @@ TEST_F(BufferPoolManagerLab1Test, DeletePage) { VerifyDeletePage(); }
 
 TEST_F(BufferPoolManagerLab1Test, FlushPage) { VerifyFlushPage(); }
 
+TEST_F(BufferPoolManagerLab1Test, FetchIncrementsPinForSameLogicalPage) {
+  VerifyFetchIncrementsPinForSameLogicalPage();
+}
+
+TEST_F(BufferPoolManagerLab1Test, DeleteWhilePinnedFails) { VerifyDeleteWhilePinnedFails(); }
+
+TEST_F(BufferPoolManagerLab1Test, UnpinUnknownPageReturnsFalse) { VerifyUnpinUnknownPageReturnsFalse(); }
+
 }  // namespace onebase

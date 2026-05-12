@@ -185,6 +185,45 @@ class LockManagerLab4Test : public ::testing::Test {
     lm.Unlock(&txn2, rid1);
     lm.Unlock(&txn3, rid2);
   }
+
+  void VerifyLockSharedTwiceIsIdempotent() {
+    LockManager lm;
+    Transaction txn(0);
+    RID rid(0, 0);
+    EXPECT_TRUE(lm.LockShared(&txn, rid));
+    EXPECT_TRUE(lm.LockShared(&txn, rid));
+    EXPECT_TRUE(txn.IsSharedLocked(rid));
+    EXPECT_TRUE(lm.Unlock(&txn, rid));
+    EXPECT_FALSE(txn.IsSharedLocked(rid));
+  }
+
+  void VerifyUpgradeUnblocksAfterOtherSharedReleases() {
+    LockManager lm;
+    Transaction txn0(0), txn1(1);
+    RID rid(0, 0);
+
+    lm.LockShared(&txn0, rid);
+    lm.LockShared(&txn1, rid);
+
+    std::promise<void> started;
+    std::promise<bool> upgraded;
+
+    std::thread t([&]() {
+      started.set_value();
+      upgraded.set_value(lm.LockUpgrade(&txn0, rid));
+    });
+
+    started.get_future().wait();
+    std::this_thread::sleep_for(std::chrono::milliseconds(30));
+    EXPECT_FALSE(txn0.IsExclusiveLocked(rid));
+
+    lm.Unlock(&txn1, rid);
+    EXPECT_TRUE(upgraded.get_future().get());
+    t.join();
+
+    EXPECT_TRUE(txn0.IsExclusiveLocked(rid));
+    lm.Unlock(&txn0, rid);
+  }
 };
 
 }  // namespace onebase::test
